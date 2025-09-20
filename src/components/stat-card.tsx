@@ -1,38 +1,24 @@
 "use client";
 
-import React from "react";
-import { Card, CardBody } from "@heroui/react";
-import { Icon } from "@iconify/react";
+import React, { FC } from "react";
+import { Card, CardBody, Skeleton } from "@heroui/react";
+import { Icon, IconifyIcon } from "@iconify/react";
 
-interface StatCardProps {
+type StatCardProps = {
   title: string;
-  value: string;
-  change: string;
-  changeType: "positive" | "negative" | "neutral";
-  icon: string;
+  value: number | string;
+  icon: IconifyIcon | string;
   color: "primary" | "secondary" | "success" | "warning" | "danger";
-}
+  isLoading?: boolean;
+};
 
-export const StatCard: React.FC<StatCardProps> = ({
+export const StatCard: FC<StatCardProps> = ({
   title,
   value,
-  change,
-  changeType,
   icon,
   color,
+  isLoading,
 }) => {
-  const getChangeColor = () => {
-    if (changeType === "positive") return "text-success";
-    if (changeType === "negative") return "text-danger";
-    return "text-foreground-500";
-  };
-
-  const getChangeIcon = () => {
-    if (changeType === "positive") return "lucide:trending-up";
-    if (changeType === "negative") return "lucide:trending-down";
-    return "lucide:minus";
-  };
-
   const getIconBgColor = () => {
     const colorMap = {
       primary: "bg-primary-100 text-primary-500",
@@ -47,28 +33,28 @@ export const StatCard: React.FC<StatCardProps> = ({
 
   return (
     <Card className="border border-divider shadow-xs">
-      <CardBody>
-        <div className="flex items-start justify-between">
-          <div>
-            <p className="text-sm text-foreground-500">{title}</p>
-            <h3 className="text-2xl font-semibold mt-1 text-foreground">
-              {value}
-            </h3>
-            <div className="flex items-center mt-2">
-              <Icon
-                icon={getChangeIcon()}
-                className={`${getChangeColor()} mr-1`}
-                width={16}
-              />
-              <span className={`text-xs font-medium ${getChangeColor()}`}>
-                {change} from last month
-              </span>
+      <CardBody className={isLoading ? "animate-pulse" : ""}>
+        {isLoading ? (
+          <div className="flex items-start justify-between">
+            <div className="w-full">
+              <Skeleton className="h-4 w-1/3 rounded mb-2" />
+              <Skeleton className="h-8 w-1/2 rounded mb-2" />
+            </div>
+            <Skeleton className="p-2 size-9 rounded-medium" />
+          </div>
+        ) : (
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-sm text-foreground-500">{title}</p>
+              <h3 className="text-2xl font-semibold mt-1 text-foreground">
+                {value}
+              </h3>
+            </div>
+            <div className={`p-2 rounded-medium ${getIconBgColor()}`}>
+              <Icon icon={icon} width={20} />
             </div>
           </div>
-          <div className={`p-2 rounded-medium ${getIconBgColor()}`}>
-            <Icon icon={icon} width={20} />
-          </div>
-        </div>
+        )}
       </CardBody>
     </Card>
   );

@@ -1,9 +1,15 @@
 declare type Server = {
-  id: string;
+  id: number;
   name: string;
-  ipAddress: string;
-  username: string;
+  ip_address: string;
   domain: string;
-  status: "active" | "inactive";
-  connected: string;
+  is_online: boolean;
+  health_score: number;
+  cpu_usage: number;
+  ram_usage: number;
+  disk_usage: number;
+  total_bandwidth: number;
+  response_time: number;
+  last_updated: Date;
+  status_class: "excellent" | "good" | "offline";
 };

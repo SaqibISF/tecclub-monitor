@@ -1,50 +1,120 @@
-import React from "react";
+"use client";
+
+import React, { FC } from "react";
 import { StatCard } from "@/components/stat-card";
 import ServersTable from "@/components/servers-table";
 import Section from "@/components/Section";
+import useSWR from "swr";
+import { VPS_DASHBOARD_ROUTE } from "@/lib/constants";
+import { notFound } from "next/navigation";
+import { fetcher } from "@/lib/utils";
 
-export default function App() {
+const HomePage: FC = () => {
+  const { data, error, isLoading } = useSWR<{
+    message?: string;
+    servers: Server[];
+    stats: {
+      total_servers: number;
+      online_servers: number;
+      offline_servers: number;
+      average_health: number;
+      total_bandwidth_usage: number;
+      critical_servers: number;
+    };
+    timestamp: Date;
+  }>(
+    VPS_DASHBOARD_ROUTE,
+    (url) =>
+      fetcher(url, {
+        method: "GET",
+        headers: {
+          Authorization:
+            "Bearer vm9VGyGyv0niFxBD3yDi7s6o1zMvS7BAzFWLo26EWppJ5iyHDuuj5YgTm0ppRBkS",
+        },
+      }),
+    { keepPreviousData: true }
+  );
+
+  if (data?.message) {
+    notFound();
+  }
+
+  const loadingState =
+    isLoading || data?.servers?.length === 0 ? "loading" : "idle";
+
   return (
     <Section
       heading="Dashboard"
       description="Welcome back! Here's an overview of your analytics"
     >
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <StatCard
-          title="Total Users"
-          value="2,543"
-          change="+12.5%"
-          changeType="positive"
-          icon="lucide:users"
-          color="primary"
-        />
-        <StatCard
-          title="Revenue"
-          value="$45,231"
-          change="+8.2%"
-          changeType="positive"
-          icon="lucide:dollar-sign"
-          color="success"
-        />
-        <StatCard
-          title="Active Sessions"
-          value="1,324"
-          change="-3.1%"
-          changeType="negative"
-          icon="lucide:activity"
-          color="warning"
-        />
-        <StatCard
-          title="Conversion Rate"
-          value="24.5%"
-          change="+2.3%"
-          changeType="positive"
-          icon="lucide:percent"
-          color="secondary"
-        />
+        {[
+          {
+            title: "Total Servers",
+            value: data?.stats?.total_servers ?? "-",
+            icon: "lucide:server",
+            color: "primary",
+          },
+          {
+            title: "Online Servers",
+            value: data?.stats?.online_servers ?? "-",
+            icon: "lucide:check-circle",
+            color: "success",
+          },
+          {
+            title: "Offline Servers",
+            value: data?.stats?.offline_servers ?? "-",
+            icon: "lucide:x-circle",
+            color: "danger",
+          },
+          {
+            title: "Critical Servers",
+            value: data?.stats?.critical_servers ?? "-",
+            icon: "lucide:alert-triangle",
+            color: "warning",
+          },
+          {
+            title: "Avg. Health",
+            value: data?.stats?.average_health
+              ? `${data.stats.average_health}%`
+              : "-",
+            icon: "lucide:heart-pulse",
+            color: "secondary",
+          },
+          {
+            title: "Bandwidth Usage",
+            value: data?.stats?.total_bandwidth_usage
+              ? `${data.stats.total_bandwidth_usage} MB`
+              : "-",
+            icon: "lucide:activity",
+            color: "primary",
+          },
+        ].map(({ title, value, icon, color }, index) => (
+          <StatCard
+            key={index}
+            title={title}
+            value={value}
+            icon={icon}
+            isLoading={isLoading}
+            color={
+              color as
+                | "primary"
+                | "secondary"
+                | "success"
+                | "warning"
+                | "danger"
+            }
+          />
+        ))}
       </div>
 
-      <ServersTable />
+      <ServersTable
+        servers={data?.servers}
+        loadingState={loadingState}
+        errorMessage={error?.message}
+      />
     </Section>
   );
-}
+};
+
+export default HomePage;

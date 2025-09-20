@@ -4,11 +4,19 @@ import React, { FC } from "react";
 import Section from "@/components/Section";
 import { Card, CardBody, CardFooter, CardHeader } from "@heroui/card";
 import { CircularProgress } from "@heroui/progress";
-import { useParams } from "next/navigation";
+import { notFound, useParams } from "next/navigation";
 import { ChartCard } from "./chart-card";
+import useSWR from "swr";
+import { Live_Server_Metric } from "@/lib/constants";
 
 const ServerDetails: FC = () => {
   const { serverId } = useParams();
+
+  if (isNaN(Number(serverId))) {
+    notFound();
+  }
+
+  const {} = useSWR(Live_Server_Metric(Number(serverId)), )
 
   return (
     <Section
