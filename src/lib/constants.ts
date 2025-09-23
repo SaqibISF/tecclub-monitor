@@ -1,9 +1,5 @@
-export const REST_API_BASE_URL = process.env.NEXT_PUBLIC_REST_API_BASE_URL!;
+export const APP_URL = process.env.APP_URL!;
 
-export const VPS_DASHBOARD_ROUTE = `${REST_API_BASE_URL}/vps/dashboard`;
-
-export const Live_Server_Metric = (serverId: number | string) =>
-  `${REST_API_BASE_URL}/vps/servers/${serverId}/live`;
-
-export const Server_Metric = (serverId: number | string) =>
-  `${REST_API_BASE_URL}/vps/servers/${serverId}/metrics`;
+export const allowedDomains = process.env
+  .ALLOWED_DOMAINS!.split(",")
+  .map((domain) => domain.trim());

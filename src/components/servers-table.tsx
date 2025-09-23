@@ -15,10 +15,11 @@ import Link from "next/link";
 import { LoadingState } from "@react-types/shared";
 
 const ServersTable: FC<{
+  payload: string;
   servers?: Server[];
   loadingState?: LoadingState;
   errorMessage?: string;
-}> = ({ servers, loadingState, errorMessage }) => (
+}> = ({ payload, servers, loadingState, errorMessage }) => (
   <div className="w-full space-y-2">
     <h3 className="text-2xl font-bold">Servers</h3>
     <Table aria-label="VPS Servers" classNames={{ wrapper: "p-0" }}>
@@ -70,7 +71,7 @@ const ServersTable: FC<{
                 ) : columnKey === "actions" ? (
                   <Button
                     as={Link}
-                    href={`/server-details/${server.id}`}
+                    href={`/server-details/${server.id}?payload=${payload}`}
                     color="primary"
                     size="sm"
                   >

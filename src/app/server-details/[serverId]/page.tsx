@@ -1,23 +1,27 @@
 "use client";
 
-import React, { FC } from "react";
+import React, { FC, Suspense } from "react";
 import Section from "@/components/Section";
 import { Card, CardBody, CardFooter, CardHeader } from "@heroui/card";
 import { CircularProgress } from "@heroui/progress";
-import { notFound, useParams } from "next/navigation";
+import { notFound, useParams, useSearchParams } from "next/navigation";
 import { ChartCard } from "@/components/chart-card";
 import useSWR from "swr";
-import { Live_Server_Metric, Server_Metric } from "@/lib/constants";
 import { fetcher } from "@/lib/utils";
+import { Alert } from "@heroui/alert";
 
 const ServerDetails: FC = () => {
+  const searchParams = useSearchParams();
+  const payload = searchParams.get("payload");
   const { serverId } = useParams();
 
-  if (isNaN(Number(serverId))) {
+  if (!payload || isNaN(Number(serverId))) {
     notFound();
   }
 
   const { data: usage } = useSWR<{
+    success: boolean;
+    message?: string;
     server: { id: number; name: string; ip_address: string; domain: string };
     timestamp: Date;
     is_online: boolean;
@@ -30,19 +34,20 @@ const ServerDetails: FC = () => {
     response_time: number | null;
     last_updated: Date;
   }>(
-    Live_Server_Metric(Number(serverId)),
+    `/api/live-server-metric/${serverId}`,
     (url) =>
       fetcher(url, {
         method: "GET",
         headers: {
-          Authorization:
-            "Bearer vm9VGyGyv0niFxBD3yDi7s6o1zMvS7BAzFWLo26EWppJ5iyHDuuj5YgTm0ppRBkS",
+          Authorization: `Bearer ${payload}`,
         },
       }),
     { keepPreviousData: true }
   );
 
   const { data } = useSWR<{
+    success: boolean;
+    message?: string;
     server: { id: number; name: string; ip_address: string; domain: string };
     time_range: string;
     metrics: {
@@ -82,13 +87,12 @@ const ServerDetails: FC = () => {
     };
     timestamp: Date;
   }>(
-    Server_Metric(Number(serverId)),
+    `/api/server-metric/${serverId}`,
     (url) =>
       fetcher(url, {
         method: "GET",
         headers: {
-          Authorization:
-            "Bearer vm9VGyGyv0niFxBD3yDi7s6o1zMvS7BAzFWLo26EWppJ5iyHDuuj5YgTm0ppRBkS",
+          Authorization: `Bearer ${payload}`,
         },
       }),
     { keepPreviousData: true }
@@ -99,6 +103,12 @@ const ServerDetails: FC = () => {
       heading="Metrics & Monitoring"
       description="View real-time metrics and monitor your server's performance."
     >
+      {!data?.success && data?.message && (
+        <Alert color="danger" classNames={{ title: "text-start" }}>
+          {data?.message}
+        </Alert>
+      )}
+
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {[
           {
@@ -194,4 +204,10 @@ const ServerDetails: FC = () => {
   );
 };
 
-export default ServerDetails;
+const Page: FC = () => (
+  <Suspense>
+    <ServerDetails />
+  </Suspense>
+);
+
+export default Page;

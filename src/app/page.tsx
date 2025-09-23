@@ -1,16 +1,24 @@
 "use client";
 
-import React, { FC } from "react";
+import React, { FC, Suspense } from "react";
 import { StatCard } from "@/components/stat-card";
 import ServersTable from "@/components/servers-table";
 import Section from "@/components/Section";
 import useSWR from "swr";
-import { VPS_DASHBOARD_ROUTE } from "@/lib/constants";
-import { notFound } from "next/navigation";
+import { notFound, useSearchParams } from "next/navigation";
 import { fetcher } from "@/lib/utils";
+import { Alert } from "@heroui/alert";
 
 const HomePage: FC = () => {
+  const searchParams = useSearchParams();
+  const payload = searchParams.get("payload");
+
+  if (!payload) {
+    notFound();
+  }
+
   const { data, error, isLoading } = useSWR<{
+    success: boolean;
     message?: string;
     servers: Server[];
     stats: {
@@ -23,21 +31,10 @@ const HomePage: FC = () => {
     };
     timestamp: Date;
   }>(
-    VPS_DASHBOARD_ROUTE,
-    (url) =>
-      fetcher(url, {
-        method: "GET",
-        headers: {
-          Authorization:
-            "Bearer vm9VGyGyv0niFxBD3yDi7s6o1zMvS7BAzFWLo26EWppJ5iyHDuuj5YgTm0ppRBkS",
-        },
-      }),
+    "/api/dashboard",
+    (url) => fetcher(url, { headers: { Authorization: `Bearer ${payload}` } }),
     { keepPreviousData: true }
   );
-
-  if (data?.message) {
-    notFound();
-  }
 
   const loadingState =
     isLoading || data?.servers?.length === 0 ? "loading" : "idle";
@@ -47,6 +44,11 @@ const HomePage: FC = () => {
       heading="Dashboard"
       description="Welcome back! Here's an overview of your analytics"
     >
+      {!data?.success && data?.message && (
+        <Alert color="danger" classNames={{ title: "text-start" }}>
+          {data?.message}
+        </Alert>
+      )}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         {[
           {
@@ -109,6 +111,7 @@ const HomePage: FC = () => {
       </div>
 
       <ServersTable
+        payload={payload}
         servers={data?.servers}
         loadingState={loadingState}
         errorMessage={error?.message}
@@ -117,4 +120,10 @@ const HomePage: FC = () => {
   );
 };
 
-export default HomePage;
+const Page: FC = () => (
+  <Suspense>
+    <HomePage />
+  </Suspense>
+);
+
+export default Page;
