@@ -10,6 +10,13 @@ import useSWR from "swr";
 import { fetcher } from "@/lib/utils";
 import { Alert } from "@heroui/alert";
 import { Key } from "@react-types/shared";
+import { Listbox, ListboxItem } from "@heroui/listbox";
+import { Chip } from "@heroui/chip";
+import { Button } from "@heroui/button";
+import ExclamationTriangle from "@/icons/ExclamationTriangle";
+import FilledCircleI from "@/icons/FilledCircleI";
+import HeartBeats from "@/icons/HeartBeats";
+import Clock from "@/icons/Clock";
 
 const ServerDetails: FC = () => {
   const searchParams = useSearchParams();
@@ -75,15 +82,31 @@ const ServerDetails: FC = () => {
       min_response_time: number;
       max_response_time: number;
     };
-    incidents: [
-      {
-        type: string;
-        severity: string;
-        max_response_time: number;
-        message: string;
-        timestamp: Date;
-      }
-    ];
+    incidents?: {
+      type:
+        | "downtime"
+        | "health_degradation"
+        | "high_cpu_usage"
+        | "high_ram_usage"
+        | "high_disk_usage"
+        | "slow_response"
+        | "recovery"
+        | "high_cpu";
+      severity: "critical" | "warning" | "high" | "medium" | "info";
+      message: string;
+      affected_hours?: number;
+      duration_minutes?: number;
+      min_health_score?: number;
+      max_cpu_usage?: number;
+      max_ram_usage?: number;
+      max_disk_usage?: number;
+      max_response_time_ms?: number;
+      uptime_improvement?: number;
+      max_cpu?: number;
+      max_response_time?: number;
+      count?: number;
+      timestamp: string;
+    }[];
     data_points: number;
     data_source: {
       type: string;
@@ -198,12 +221,14 @@ const ServerDetails: FC = () => {
         },
         {
           id: "bandwidth-usage",
-          title: "Bandwidth Usage",
+          title: "Bandwidth Usage (mbs)",
           color: "warning",
           data: data?.metrics?.map((metric) => ({
             name: metric.time_group,
             value: metric.bandwidth_usage,
           })),
+          domain: [0, 10000],
+          unit: "",
         },
         {
           id: "response-time",
@@ -214,7 +239,7 @@ const ServerDetails: FC = () => {
             value: metric.response_time,
           })),
           domain: [0, 999],
-          unit: ""
+          unit: "",
         },
         {
           id: "total-mbit-per-s",
@@ -225,7 +250,7 @@ const ServerDetails: FC = () => {
             value: metric.total_mbit_per_s,
           })),
           domain: [0, 10000],
-          unit: ""
+          unit: "",
         },
       ].map(({ id, title, color, data, domain, unit }) => (
         <ChartCard
@@ -241,6 +266,79 @@ const ServerDetails: FC = () => {
           setRange={setRange}
         />
       ))}
+
+      {data?.incidents?.length ? (
+        <Card className="mt-6 p-6 border border-divider shadow-xs">
+          <CardHeader className="text-lg font-semibold">Incidents</CardHeader>
+
+          <Listbox aria-label="Incidents">
+            {data.incidents.map((incident, index) => (
+              <ListboxItem key={index} showDivider>
+                <div className="flex gap-x-4 items-start py-2">
+                  <Button
+                    as="span"
+                    isIconOnly
+                    size="lg"
+                    className="pointer-events-none"
+                    color={
+                      incident.severity === "critical" ||
+                      incident.severity === "high"
+                        ? "danger"
+                        : incident.severity === "warning"
+                        ? "warning"
+                        : incident.severity === "info"
+                        ? "primary"
+                        : incident.severity === "medium"
+                        ? "secondary"
+                        : "default"
+                    }
+                    variant="flat"
+                  >
+                    {(incident.severity === "critical" ||
+                      incident.severity === "warning") && (
+                      <ExclamationTriangle />
+                    )}
+                    {(incident.severity === "info" ||
+                      incident.severity === "medium") && <FilledCircleI />}
+                    {incident.severity === "high" && <HeartBeats />}
+                  </Button>
+
+                  <div className="flex-1 flex flex-col gap-y-2">
+                    <div className="flex items-center gap-x-4">
+                      <h4 className="text-base font-semibold capitalize">
+                        {incident.type.replace("_", " ")}
+                      </h4>
+                      <Chip
+                        color={
+                          incident.severity === "critical" ||
+                          incident.severity === "high"
+                            ? "danger"
+                            : incident.severity === "warning"
+                            ? "warning"
+                            : incident.severity === "info"
+                            ? "primary"
+                            : incident.severity === "medium"
+                            ? "secondary"
+                            : "default"
+                        }
+                        variant="flat"
+                        size="sm"
+                      >
+                        {incident.severity}
+                      </Chip>
+                    </div>
+                    <p className="text-default-500">{incident.message}</p>
+                    <p className="text-default-500 text-sm flex items-center gap-x-1">
+                      <Clock className="size-4" />
+                      TimeStamp: {incident.timestamp}
+                    </p>
+                  </div>
+                </div>
+              </ListboxItem>
+            ))}
+          </Listbox>
+        </Card>
+      ) : undefined}
     </Section>
   );
 };

@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
+import Navbar from "@/components/Navbar";
 
 const inter = Inter({
   variable: "--font-inter-sans",
@@ -39,6 +40,7 @@ export default function RootLayout({
           themeProps={{ attribute: "class", defaultTheme: "light" }}
           className="min-h-screen"
         >
+          <Navbar />
           {children}
         </Providers>
       </body>
