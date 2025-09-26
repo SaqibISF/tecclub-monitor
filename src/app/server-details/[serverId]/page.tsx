@@ -306,7 +306,7 @@ const ServerDetails: FC = () => {
                   <div className="flex-1 flex flex-col gap-y-2">
                     <div className="flex items-center gap-x-4">
                       <h4 className="text-base font-semibold capitalize">
-                        {incident.type.replace("_", " ")}
+                        {incident.type.replace(/_/g, " ")}
                       </h4>
                       <Chip
                         color={
