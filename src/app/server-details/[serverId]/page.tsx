@@ -1,6 +1,6 @@
 "use client";
 
-import React, { FC, Suspense } from "react";
+import React, { FC, Suspense, useState } from "react";
 import Section from "@/components/Section";
 import { Card, CardBody, CardFooter, CardHeader } from "@heroui/card";
 import { CircularProgress } from "@heroui/progress";
@@ -9,11 +9,14 @@ import { ChartCard } from "@/components/chart-card";
 import useSWR from "swr";
 import { fetcher } from "@/lib/utils";
 import { Alert } from "@heroui/alert";
+import { Key } from "@react-types/shared";
 
 const ServerDetails: FC = () => {
   const searchParams = useSearchParams();
   const payload = searchParams.get("payload");
   const { serverId } = useParams();
+
+  const [range, setRange] = useState<Key>("live");
 
   if (!payload || isNaN(Number(serverId))) {
     notFound();
@@ -58,6 +61,9 @@ const ServerDetails: FC = () => {
       disk_usage: number;
       bandwidth_usage: number;
       response_time: number;
+      download_rate_kbit: number;
+      upload_rate_kbit: number;
+      total_mbit_per_s: number;
       uptime_percentage: number;
       time_group: string;
     }[];
@@ -87,7 +93,7 @@ const ServerDetails: FC = () => {
     };
     timestamp: Date;
   }>(
-    `/api/server-metric/${serverId}`,
+    `/api/server-metric/${serverId}?range=${range}`,
     (url) =>
       fetcher(url, {
         method: "GET",
@@ -158,7 +164,7 @@ const ServerDetails: FC = () => {
           id: "cpu-usage",
           title: "CPU Usage",
           color: "danger",
-          data: data?.metrics.map((metric) => ({
+          data: data?.metrics?.map((metric) => ({
             name: metric.time_group,
             value: metric.cpu_usage,
           })),
@@ -167,7 +173,7 @@ const ServerDetails: FC = () => {
           id: "ram-usage",
           title: "RAM Usage",
           color: "success",
-          data: data?.metrics.map((metric) => ({
+          data: data?.metrics?.map((metric) => ({
             name: metric.time_group,
             value: metric.ram_usage,
           })),
@@ -176,7 +182,7 @@ const ServerDetails: FC = () => {
           id: "disk-usage",
           title: "Disk Usage",
           color: "primary",
-          data: data?.metrics.map((metric) => ({
+          data: data?.metrics?.map((metric) => ({
             name: metric.time_group,
             value: metric.disk_usage,
           })),
@@ -185,19 +191,54 @@ const ServerDetails: FC = () => {
           id: "server-health",
           title: "Server Health",
           color: "secondary",
-          data: data?.metrics.map((metric) => ({
+          data: data?.metrics?.map((metric) => ({
             name: metric.time_group,
             value: metric.health_score,
           })),
         },
-      ].map(({ id, title, color, data }) => (
+        {
+          id: "bandwidth-usage",
+          title: "Bandwidth Usage",
+          color: "warning",
+          data: data?.metrics?.map((metric) => ({
+            name: metric.time_group,
+            value: metric.bandwidth_usage,
+          })),
+        },
+        {
+          id: "response-time",
+          title: "Response Time",
+          color: "success",
+          data: data?.metrics?.map((metric) => ({
+            name: metric.time_group,
+            value: metric.response_time,
+          })),
+          domain: [0, 999],
+          unit: ""
+        },
+        {
+          id: "total-mbit-per-s",
+          title: "Speed mb/s",
+          color: "danger",
+          data: data?.metrics?.map((metric) => ({
+            name: metric.time_group,
+            value: metric.total_mbit_per_s,
+          })),
+          domain: [0, 10000],
+          unit: ""
+        },
+      ].map(({ id, title, color, data, domain, unit }) => (
         <ChartCard
           key={id}
           id={id}
           title={title}
-          color={color as "danger" | "success" | "primary" | "secondary"}
+          color={color as "primary"}
           data={data}
+          domain={domain}
+          unit={unit}
           className="mt-6"
+          range={range}
+          setRange={setRange}
         />
       ))}
     </Section>

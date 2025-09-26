@@ -9,21 +9,39 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-
 import { cn } from "@/lib/utils";
+import { Tab, Tabs } from "@heroui/tabs";
+import { Key } from "@react-types/shared";
+import { AxisDomain } from "recharts/types/util/types";
 
 export const ChartCard: FC<
   CardProps & {
     title: string;
     color?: "danger" | "success" | "primary" | "secondary";
     data?: { name: string; value: number }[];
+    domain?: AxisDomain;
+    unit?: string;
+    range: Key;
+    setRange: (range: Key) => void;
   }
-> = ({ id, title, color = "primary", data, className, ...props }) => {
+> = ({
+  id,
+  title,
+  color = "primary",
+  data,
+  domain = [0, 100],
+  unit = "%",
+  range,
+  setRange,
+  className,
+  ...props
+}) => {
   const colorMap = {
     danger: "hsl(var(--heroui-danger-500))",
     success: "hsl(var(--heroui-success-500))",
     primary: "hsl(var(--heroui-primary-500))",
     secondary: "hsl(var(--heroui-secondary-500))",
+    warning: "hsl(var(--heroui-warning-500))",
   };
 
   return (
@@ -31,8 +49,20 @@ export const ChartCard: FC<
       className={cn("p-6 border border-divider shadow-xs", className)}
       {...props}
     >
-      <CardHeader className="text-start">
+      <CardHeader className="justify-between">
         <h3 className="text-lg font-semibold">{title}</h3>
+        <Tabs
+          selectedKey={range}
+          onSelectionChange={setRange}
+          size="sm"
+          color={color}
+        >
+          <Tab key="live" title="Live" />
+          <Tab key="24h" title="Day" />
+          <Tab key="1w" title="Week" />
+          <Tab key="1m" title="Month" />
+          <Tab key="3m" title="3 Months" />
+        </Tabs>
       </CardHeader>
       <CardBody className="pt-0 pb-4 px-2">
         <ResponsiveContainer width="100%" height={300}>
@@ -74,7 +104,8 @@ export const ChartCard: FC<
               axisLine={false}
               tickLine={false}
               tick={{ fontSize: 12, fill: "hsl(var(--heroui-foreground-500))" }}
-              tickFormatter={(value) => `${value}%`}
+              tickFormatter={(value) => `${value}${unit}`}
+              domain={domain}
             />
             <Tooltip
               contentStyle={{
